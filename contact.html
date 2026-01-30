@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>联系我 - 观雪斋</title>
+    <script src="js/js-calendar-converter.js"></script>
+    <link href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@300;400;700&family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+          /* 添加悬停框样式 */
+        .time-tooltip {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 320px;
+            background-color: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 2rem;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            pointer-events: none;
+        }
+        
+        .ancient-time {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .ancient-time:hover .time-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(5px);
+            pointer-events: auto;
+        }
+        
+        .tooltip-header {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 1.8rem;
+            color: #1a1a1a;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        
+        .tooltip-content {
+            font-family: 'ZCOOL XiaoWei', serif;
+            font-size: 1.4rem;
+            line-height: 1.6;
+        }
+        
+        .tooltip-item {
+            margin-bottom: 0.8rem;
+            display: flex;
+        }
+        
+        .tooltip-label {
+            color: rgba(26, 26, 26, 0.7);
+            min-width: 80px;
+            flex-shrink: 0;
+        }
+        
+        .tooltip-value {
+            color: #1a1a1a;
+            flex: 1;
+        }
+        
+        .tooltip-note {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 1.2rem;
+            color: rgba(26, 26, 26, 0.6);
+            text-align: center;
+            font-style: italic;
+        }
+        
+        /* 修复导航栏链接点击 */
+        .nav-link[href^="http"], 
+        .nav-link[href$=".html"] {
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        
+        /* 确保页面链接不会被覆盖 */
+        .page-link {
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        
+        /* 修复太极八卦区域的鼠标事件 */
+        .bagua-container * {
+            pointer-events: auto;
+        }
+        
+        /* 修复水境区域的链接 */
+        .explore-btn {
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 900px) {
+            .time-tooltip {
+                width: 280px;
+                padding: 1.8rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .time-tooltip {
+                width: 260px;
+                padding: 1.5rem;
+                right: -50%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .time-tooltip {
+                width: 240px;
+                padding: 1.3rem;
+                right: -60%;
+            }
+        }
+
+
+        /* 联系页面特有样式 */
+        .contact-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15rem 5% 6rem;
+            min-height: 100vh;
+        }
+        
+        /* 个人头像展示区域 */
+        .profile-section {
+            text-align: center;
+            margin-bottom: 8rem;
+            position: relative;
+            animation: fadeUp 1s ease-out both;
+        }
+        
+        .avatar-wrapper {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .avatar-border {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            z-index: 1;
+            animation: rotateBorder 20s linear infinite;
+        }
+        
+        .avatar-border::before,
+        .avatar-border::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #8b0000;
+            border-radius: 50%;
+        }
+        
+        .avatar-border::before {
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .avatar-border::after {
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .avatar {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            object-fit: cover;
+            z-index: 2;
+            position: relative;
+            border: 4px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.5s ease;
+        }
+        
+        .avatar:hover {
+            transform: scale(1.05);
+        }
+        
+        .profile-name {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 5rem;
+            color: #1a1a1a;
+            margin-bottom: 1rem;
+            letter-spacing: 0.5rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .profile-name::before,
+        .profile-name::after {
+            content: '❖';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #8b0000;
+            font-size: 2rem;
+            opacity: 0.7;
+        }
+        
+        .profile-name::before {
+            left: -4rem;
+        }
+        
+        .profile-name::after {
+            right: -4rem;
+        }
+        
+        .profile-title {
+            font-family: 'ZCOOL XiaoWei', serif;
+            font-size: 2.4rem;
+            color: rgba(26, 26, 26, 0.7);
+            margin-bottom: 2rem;
+            letter-spacing: 0.3rem;
+        }
+        
+        .profile-motto {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 1.8rem;
+            color: rgba(26, 26, 26, 0.6);
+            max-width: 600px;
+            margin: 0 auto 3rem;
+            line-height: 1.8;
+            font-style: italic;
+            position: relative;
+            padding: 0 3rem;
+        }
+        
+        .profile-motto::before,
+        .profile-motto::after {
+            content: '"';
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 4rem;
+            color: rgba(139, 0, 0, 0.3);
+            position: absolute;
+            top: -1rem;
+        }
+        
+        .profile-motto::before {
+            left: 0;
+        }
+        
+        .profile-motto::after {
+            right: 0;
+            top: auto;
+            bottom: -2rem;
+        }
+        
+        /* 联系信息区域 */
+        .contact-header {
+            text-align: center;
+            margin-bottom: 6rem;
+            animation: fadeUp 1s ease-out 0.3s both;
+            position: relative;
+        }
+        
+        .contact-header::before {
+            content: '';
+            position: absolute;
+            top: -2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.2), transparent);
+        }
+        
+        .contact-title {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 4.2rem;
+            color: #1a1a1a;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.3rem;
+        }
+        
+        .contact-subtitle {
+            font-family: 'ZCOOL XiaoWei', serif;
+            font-size: 2rem;
+            color: rgba(26, 26, 26, 0.7);
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* 联系卡片网格 */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+            margin-bottom: 6rem;
+        }
+        
+        .contact-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            padding: 3rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            animation: fadeUp 1s ease-out 0.6s both;
+        }
+        
+        .contact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+        
+        .card-icon {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            color: rgba(0, 0, 0, 0.8);
+            text-align: center;
+        }
+        
+        .card-title {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 2.4rem;
+            color: #1a1a1a;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            letter-spacing: 0.2rem;
+        }
+        
+        .card-content {
+            font-family: 'ZCOOL XiaoWei', serif;
+            font-size: 1.6rem;
+            line-height: 1.8;
+            color: rgba(26, 26, 26, 0.8);
+            text-align: center;
+        }
+        
+        .social-link {
+            color: #1a1a1a;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+        }
+        
+        .social-link:hover {
+            background: rgba(255, 255, 255, 0.5);
+            border-color: rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .social-icon {
+            font-size: 2.4rem;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: rgba(139, 0, 0, 0.05);
+            flex-shrink: 0;
+        }
+        
+        .social-info {
+            flex: 1;
+            text-align: left;
+        }
+        
+        .social-name {
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 500;
+            font-size: 1.6rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .social-handle {
+            font-family: 'ZCOOL XiaoWei', serif;
+            font-size: 1.4rem;
+            color: rgba(26, 26, 26, 0.6);
+        }
+        
+        .contact-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
+            margin: 4rem 0;
+        }
+        
+        .quote-section {
+            max-width: 800px;
+            margin: 6rem auto;
+            text-align: center;
+            animation: fadeUp 1s ease-out 0.9s both;
+        }
+        
+        .quote-text {
+            font-family: 'ZCOOL XiaoWei', serif;
+            font-size: 2.4rem;
+            line-height: 1.6;
+            color: rgba(26, 26, 26, 0.8);
+            font-style: italic;
+            margin-bottom: 2rem;
+            position: relative;
+            padding: 0 3rem;
+        }
+        
+        .quote-text::before,
+        .quote-text::after {
+            content: '"';
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 4rem;
+            color: rgba(0, 0, 0, 0.2);
+            position: absolute;
+            top: -10px;
+        }
+        
+        .quote-text::before {
+            left: 0;
+        }
+        
+        .quote-text::after {
+            right: 0;
+            top: auto;
+            bottom: -20px;
+        }
+        
+        .quote-author {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 1.6rem;
+            color: rgba(26, 26, 26, 0.6);
+        }
+        
+        .back-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem 3rem;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 50px;
+            font-family: 'ZCOOL XiaoWei', serif;
+            font-size: 1.6rem;
+            color: #1a1a1a;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-top: 3rem;
+        }
+        
+        .back-home:hover {
+            background: rgba(255, 255, 255, 1);
+            border-color: rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+        
+        .back-arrow {
+            font-size: 2rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .back-home:hover .back-arrow {
+            transform: translateX(-5px);
+        }
+        
+        /* 动画效果 */
+        @keyframes rotateBorder {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .contact-container {
+                padding: 12rem 5% 6rem;
+            }
+            
+            .avatar-wrapper {
+                width: 160px;
+                height: 160px;
+                margin-bottom: 2rem;
+            }
+            
+            .avatar {
+                width: 140px;
+                height: 140px;
+            }
+            
+            .profile-name {
+                font-size: 3.6rem;
+                letter-spacing: 0.3rem;
+            }
+            
+            .profile-name::before,
+            .profile-name::after {
+                font-size: 1.6rem;
+            }
+            
+            .profile-name::before {
+                left: -3rem;
+            }
+            
+            .profile-name::after {
+                right: -3rem;
+            }
+            
+            .profile-title {
+                font-size: 2rem;
+            }
+            
+            .profile-motto {
+                font-size: 1.6rem;
+                padding: 0 2rem;
+            }
+            
+            .contact-title {
+                font-size: 3.2rem;
+            }
+            
+            .contact-subtitle {
+                font-size: 1.8rem;
+            }
+            
+            .contact-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .contact-card {
+                padding: 2rem;
+            }
+            
+            .quote-text {
+                font-size: 2rem;
+                padding: 0 2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .avatar-wrapper {
+                width: 140px;
+                height: 140px;
+            }
+            
+            .avatar {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .profile-name {
+                font-size: 2.8rem;
+                letter-spacing: 0.2rem;
+            }
+            
+            .profile-name::before,
+            .profile-name::after {
+                display: none;
+            }
+            
+            .profile-title {
+                font-size: 1.8rem;
+            }
+            
+            .profile-motto {
+                font-size: 1.4rem;
+            }
+            
+            .contact-title {
+                font-size: 2.8rem;
+            }
+            
+            .contact-subtitle {
+                font-size: 1.6rem;
+            }
+            
+            .card-title {
+                font-size: 2rem;
+            }
+            
+            .quote-text {
+                font-size: 1.8rem;
+            }
+            
+            .social-link {
+                padding: 1rem;
+                gap: 1rem;
+            }
+            
+            .social-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 页面水墨过渡效果 -->
+    <div class="page-transition"></div>
+    
+    <!-- 水墨背景 -->
+    <div class="ink-bg"></div>
+    
+    <!-- 水墨装饰点 -->
+    <div class="ink-dot ink-dot-1"></div>
+    <div class="ink-dot ink-dot-2"></div>
+    
+    <!-- 顶部导航栏 -->
+    <nav class="top-nav">
+        <h1 class="site-name">观雪斋</h1>
+        
+        <div class="nav-section">
+            <div class="nav-links">
+                <a href="#water" class="nav-link">水境</a>
+                <a href="#philosophy" class="nav-link">哲思</a>
+                <a href="#journey" class="nav-link">旅程</a>
+                <a href="index.html" class="nav-link">首页</a>
+            </div>
+            <!-- 古代时辰时间显示 -->
+            <div class="ancient-time" id="ancientTime">
+                <span id="lunarDate"></span>
+                <span class="time-separator">|</span>
+                <span id="ancientHour"></span>
+                 <div class="time-tooltip" id="timeTooltip">
+                    <div class="tooltip-header">今日详细信息</div>
+                    <div class="tooltip-content">
+                        <div class="tooltip-item">
+                            <span class="tooltip-label">农历日期：</span>
+                            <span class="tooltip-value" id="detailLunarDate"></span>
+                        </div>
+                        <div class="tooltip-item">
+                            <span class="tooltip-label">公历日期：</span>
+                            <span class="tooltip-value" id="detailSolarDate"></span>
+                        </div>
+                        <div class="tooltip-item">
+                            <span class="tooltip-label">天干地支：</span>
+                            <span class="tooltip-value" id="detailGanzhi"></span>
+                        </div>
+                        
+                        <!-- <div class="tooltip-item">
+                            <span class="tooltip-label">值日星宿：</span>
+                            <span class="tooltip-value" id="detailStar"></span>
+                        </div> -->
+                    </div>
+                    <div class="tooltip-note">观雪斋·别绪雪</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 联系内容区域 -->
+    <main class="contact-container">
+        <!-- 个人头像展示区域 -->
+        <section class="profile-section">
+            <div class="avatar-wrapper">
+                <div class="avatar-border"></div>
+                <!-- 请将 src 替换为您的头像图片路径 -->
+                <img src="images/avatar.jpg" alt="观雪斋主人" class="avatar">
+                <!-- 如果还没有头像图片，可以使用下面的占位符 -->
+                <!-- <div class="avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div> -->
+            </div>
+            
+            <h1 class="profile-name">别绪雪</h1>
+            <h2 class="profile-title">中國傳統文化</p></h2>
+            
+            <p class="profile-motto">
+                以水为镜，观天地之道；以雪为心，照世间之理。在此静候，与君共话传统之韵。
+            </p>
+        </section>
+        
+        <!-- 联系信息区域 -->
+        <section id="contact" class="contact-section">
+            <div class="contact-header">
+                <h2 class="contact-title">联系方式</h2>
+                <p class="contact-subtitle">水无形而有形，道无言而有言。于此静候，共话天地。</p>
+            </div>
+            
+            <!-- 联系卡片网格 -->
+            <div class="contact-grid">
+                <!-- 邮箱卡片 -->
+                <div class="contact-card">
+                    <div class="card-icon">📧</div>
+                    <h3 class="card-title">电子邮箱</h3>
+                    <div class="card-content">
+                        <a href="mailto:contact@guanxuezhai.com" class="social-link">
+                            <div class="social-icon">📨</div>
+                            <div class="social-info">
+                                <div class="social-name">主邮箱</div>
+                                <div class="social-handle">2712027410@qq.com</div>
+                            </div>
+                        </a>
+                        <!-- <a href="mailto:admin@guanxuezhai.com" class="social-link">
+                            <div class="social-icon">📩</div>
+                            <div class="social-info">
+                                <div class="social-name">工作联系</div>
+                                <div class="social-handle">admin@guanxuezhai.com</div>
+                            </div>
+                        </a> -->
+                    </div>
+                </div>
+                
+                <!-- 社交媒体卡片 -->
+                <div class="contact-card">
+                    <div class="card-icon">🌐</div>
+                    <h3 class="card-title">社交媒体</h3>
+                    <div class="card-content">
+                        <a href="https://github.com/Biexuxue" class="social-link" target="_blank" rel="noopener">
+                            <div class="social-icon">🐙</div>
+                            <div class="social-info">
+                                <div class="social-name">GitHub</div>
+                                <div class="social-handle">@Biexuxue</div>
+                            </div>
+                        </a>
+                        <a href="https://www.douyin.com/user/MS4wLjABAAAAmSjlgGgkGSE2LA8gbY22hYI2lr2SR2_Mf7gA9RY6l5ZszzPkfMSAPeNKCJ-CkQ4o?from_tab_name=main" class="social-link" target="_blank" rel="noopener">
+                            <div class="social-icon">🎵</div>
+                            <div class="social-info">
+                                <div class="social-name">抖音</div>
+                                <div class="social-handle">别绪雪</div>
+                            </div>
+                        </a>
+                        <!-- <a href="https://zhihu.com/people/guanxuezhai" class="social-link" target="_blank" rel="noopener">
+                            <div class="social-icon">📖</div>
+                            <div class="social-info">
+                                <div class="social-name">知乎</div>
+                                <div class="social-handle">观雪斋主人</div>
+                            </div>
+                        </a> -->
+                    </div>
+                </div>
+                
+                <!-- 即时通讯卡片 -->
+                <div class="contact-card">
+                    <div class="card-icon">💬</div>
+                    <h3 class="card-title">即时通讯</h3>
+                    <div class="card-content">
+                        <div class="social-link">
+                            <div class="social-icon">💬</div>
+                            <div class="social-info">
+                                <div class="social-name">微信</div>
+                                <div class="social-handle">Puujee-Sunny</div>
+                            </div>
+                        </div>
+                        <!-- <a href="https://t.me/guanxuezhai" class="social-link" target="_blank" rel="noopener">
+                            <div class="social-icon">📱</div>
+                            <div class="social-info">
+                                <div class="social-name">Telegram</div>
+                                <div class="social-handle">@guanxuezhai</div>
+                            </div>
+                        </a>
+                        <div class="social-link">
+                            <div class="social-icon">📲</div>
+                            <div class="social-info">
+                                <div class="social-name">微信公众号</div>
+                                <div class="social-handle">观雪斋文化</div>
+                            </div>
+                        </div> -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="contact-divider"></div>
+            
+            <!-- 其他平台 -->
+            <div class="contact-card" style="max-width: 800px; margin: 0 auto;">
+                <div class="card-icon">🎭</div>
+                <h3 class="card-title">其他平台</h3>
+                <div class="card-content">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <a href="https://space.bilibili.com/178452496?spm_id_from=333.337.0.0" class="social-link" target="_blank" rel="noopener">
+                            <div class="social-icon">🎬</div>
+                            <div class="social-info">
+                                <div class="social-name">B站</div>
+                                <div class="social-handle">观雪斋传统文化</div>
+                            </div>
+                        </a>
+                        <a href="#" class="social-link" target="_blank" rel="noopener">
+                            <div class="social-icon">📓</div>
+                            <div class="social-info">
+                                <div class="social-name">小红书</div>
+                                <div class="social-handle">吴智磊</div>
+                            </div>
+                        </a>
+                        <!-- <a href="https://douban.com/people/guanxuezhai" class="social-link" target="_blank" rel="noopener">
+                            <div class="social-icon">📚</div>
+                            <div class="social-info">
+                                <div class="social-name">豆瓣</div>
+                                <div class="social-handle">观雪斋主人</div>
+                            </div>
+                        </a> -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 名言警句 -->
+            <div class="quote-section">
+                <p class="quote-text">
+                    山水有相逢，来日皆可期。若有缘相遇，便以文会友，以心传心。
+                    在此等候，与君共赏传统文化之美，同悟天地自然之理。
+                </p>
+                <p class="quote-author">—— 观雪斋主人</p>
+                
+                <a href="index.html" class="back-home">
+                    <span class="back-arrow">←</span>
+                    <span>观雪斋</span>
+                </a>
+            </div>
+        </section>
+    </main>
+    
+    <!-- 底部区域 -->
+    <footer class="modern-footer">
+        <p class="copyright">© 2026 观雪斋 · 中國傳統文化哲学空间</p>
+        <div class="page-links">
+            <a href="index.html#water" class="page-link">静思</a>
+            <a href="index.html#journey" class="page-link">观水</a>
+            <a href="#contact" class="page-link">问道</a>
+        </div>
+    </footer>
+    
+    <!-- 印章 -->
+    <div class="seal">
+        <div class="seal-text">联系</div>
+    </div>
+
+    <!-- 引入农历库 -->
+    <script src="JS/calendar.js"></script>
+    
+    <script>
+       function updateAncientTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            const hour = now.getHours();
+            
+            // 使用calendar.js计算农历日期
+            const lunarInfo = calendar.solar2lunar(year, month, day);
+            
+            // 从农历信息中获取月份和日期
+            const lunarMonth = lunarInfo.IMonthCn;
+            const lunarDay = lunarInfo.IDayCn;    
+            
+            // 获取时辰
+            let ancientHour;
+            if (hour >= 23 || hour < 1) ancientHour = '子时';
+            else if (hour >= 1 && hour < 3) ancientHour = '丑时';
+            else if (hour >= 3 && hour < 5) ancientHour = '寅时';
+            else if (hour >= 5 && hour < 7) ancientHour = '卯时';
+            else if (hour >= 7 && hour < 9) ancientHour = '辰时';
+            else if (hour >= 9 && hour < 11) ancientHour = '巳时';
+            else if (hour >= 11 && hour < 13) ancientHour = '午时';
+            else if (hour >= 13 && hour < 15) ancientHour = '未时';
+            else if (hour >= 15 && hour < 17) ancientHour = '申时';
+            else if (hour >= 17 && hour < 19) ancientHour = '酉时';
+            else if (hour >= 19 && hour < 21) ancientHour = '戌时';
+            else ancientHour = '亥时';
+            
+            // 更新页面显示
+            document.getElementById('lunarDate').textContent = `${lunarMonth}${lunarDay}`;
+            document.getElementById('ancientHour').textContent = ancientHour;
+            
+            // 更新悬浮框内容
+            updateTimeTooltip(lunarInfo, ancientHour, now);
+        }
+        
+        // 更新时间悬浮框内容
+        function updateTimeTooltip(lunarInfo, ancientHour, now) {
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            
+            // 获取节气信息
+            // const solarTerm = lunarInfo.Term || '无节气';
+            
+            // 获取宜忌信息（示例）
+            
+            
+            
+            // 星宿数据
+            // const starsData = [
+            //     '角木蛟 (吉)', '亢金龙 (凶)', '氐土貉 (凶)', '房日兔 (吉)',
+            //     '心月狐 (凶)', '尾火虎 (吉)', '箕水豹 (吉)', '斗木獬 (吉)'
+            // ];
+            
+            // const star = starsData[day % starsData.length];
+            
+            // 更新悬浮框内容
+            document.getElementById('detailLunarDate').textContent = 
+                `${lunarInfo.gzYear}年 ${lunarInfo.IMonthCn}${lunarInfo.IDayCn} (${lunarInfo.Animal}年)`;
+            
+            document.getElementById('detailSolarDate').textContent = 
+                `${year}年${month}月${day}日`;
+            
+            document.getElementById('detailGanzhi').textContent = 
+                `${lunarInfo.gzYear}年 ${lunarInfo.gzMonth}月 ${lunarInfo.gzDay}日`;
+            
+            // document.getElementById('detailSolarTerm').textContent = 
+            //     solarTerm;
+            
+            // document.getElementById('detailYiJi').textContent = auspicious;
+            
+            // document.getElementById('detailStar').textContent = star;
+        }
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 立即更新时间
+            updateAncientTime();
+            
+            // 每分钟更新一次时间
+            setInterval(updateAncientTime, 60000);
+            
+            // 移除页面过渡效果
+            const pageTransition = document.querySelector('.page-transition');
+            if(pageTransition) {
+                setTimeout(() => pageTransition.remove(), 2000);
+            }
+            
+            // 平滑滚动
+            const navLinks = document.querySelectorAll('.nav-link, .page-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    if(href && href.startsWith('#')) {
+                        e.preventDefault();
+                        const targetElement = document.querySelector(href);
+                        if(targetElement) {
+                            targetElement.scrollIntoView({
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                });
+            });
+            
+            // 如果没有头像图片，创建一个默认头像
+            const avatarImg = document.querySelector('.avatar[src="images/avatar.jpg"]');
+            if (avatarImg && avatarImg.complete && avatarImg.naturalHeight === 0) {
+                // 图片加载失败或不存在，创建默认头像
+                avatarImg.style.display = 'none';
+                const avatarWrapper = document.querySelector('.avatar-wrapper');
+                const defaultAvatar = document.createElement('div');
+                defaultAvatar.className = 'avatar';
+                defaultAvatar.style.background = 'linear-gradient(135deg, #8B0000 0%, #4A0000 100%)';
+                defaultAvatar.style.display = 'flex';
+                defaultAvatar.style.alignItems = 'center';
+                defaultAvatar.style.justifyContent = 'center';
+                defaultAvatar.style.color = 'rgba(255, 255, 255, 0.9)';
+                defaultAvatar.style.fontSize = '4rem';
+                defaultAvatar.style.fontFamily = '"Ma Shan Zheng", cursive';
+                defaultAvatar.textContent = '斋';
+                avatarWrapper.appendChild(defaultAvatar);
+            }
+        });
+    </script>
+</body>
+</html>
